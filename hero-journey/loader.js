@@ -48,7 +48,10 @@
       var im = new Image(); im.id = 'kit-relief'; im.hidden = true; im.alt = ''; im.crossOrigin = 'anonymous'; im.src = base + 'relief.jpg';
       document.body.appendChild(im);
 
-      document.documentElement.dataset.theme = 'light'; // the site has one theme; never follow the device's dark mode
+      // never follow the device's dark mode: the page decides. Dark = color-scheme-2 on the section, or data-theme="dark" on the script tag
+      var dark = hero.classList.contains('color-scheme-2') || (me && me.getAttribute('data-theme') === 'dark');
+      document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+      hero.classList.toggle('is-dark', !!dark);
       body.classList.add('hero-body'); copy.classList.add('hero-copy'); cta.classList.add('hero-cta');
       var vis = document.createElement('div'); vis.className = 'hero-visual'; vis.setAttribute('aria-hidden', 'true');
       var cv = document.createElement('canvas'); cv.id = 'cv'; vis.appendChild(cv);
@@ -62,7 +65,7 @@
       return script(base + 'kit.js').then(function () { return script(base + 'journey.js'); });
     }).catch(function (e) {
       // leave the plain section in place
-      hero.classList.remove('hero', 'globe-hero', 'journey-hero', 'jr-busy');
+      hero.classList.remove('hero', 'globe-hero', 'journey-hero', 'jr-busy', 'is-dark');
       var v = hero.querySelector('.hero-visual'); if (v) v.remove();
       ['learn', 'lcard', 'bar'].forEach(function (id) { var el = document.getElementById(id); if (el) el.remove(); });
       if (window.console) console.warn('Journey hero did not start:', e);
