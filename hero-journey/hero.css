@@ -103,7 +103,7 @@
 .hero-body>.padding-global{width:100%}
 .journey-hero .hero-body{padding-left:0;padding-right:0}
 /* dark version: put the site's color-scheme-2 class on the section (or data-theme="dark" on the script tag) */
-.journey-hero.is-dark{--bg:#1D2022;--bg2:#262C2F;--ink:#F7F7F7;--body:#C7C8C8;--small:#A4A5A6;--line:rgba(247,247,247,.14);
+.journey-hero.jr-dark{--bg:#1D2022;--bg2:#262C2F;--ink:#F7F7F7;--body:#C7C8C8;--small:#A4A5A6;--line:rgba(247,247,247,.14);
   --lake:#68A9B9;--deep:#5A93A1;--sipi:#FC7A1E;--btn:#68A9B9;--btn-ink:#14181A;--btn2:rgba(247,247,247,.06);--btn2-line:rgba(247,247,247,.26);
   --scrim:29,32,34;
   --card:#262C2F;--card-line:rgba(247,247,247,.14);--card-shadow:0 24px 48px -22px rgba(0,0,0,.75),0 2px 8px -3px rgba(0,0,0,.4);--chip:rgba(29,32,34,.9)}
