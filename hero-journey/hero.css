@@ -112,3 +112,29 @@
 @media (max-width:820px){
   .globe-hero .hero-body{padding-bottom:clamp(340px,54vh,480px);padding-bottom:clamp(340px,54svh,480px)}
 }
+/* place cards: a link out, and (in the full-screen map) a pager */
+.lc-go{display:inline-flex;align-items:center;gap:8px;margin-top:12px;min-height:40px;padding:0 16px;border-radius:8px;background:var(--btn);color:var(--btn-ink);font:500 14.5px/1 var(--sans);text-decoration:none;transition:filter .2s}
+.lc-go::after{content:"\2192";font-size:15px}
+.lc-go.off{display:none}
+.lc-go:focus-visible{outline:2px solid var(--sipi);outline-offset:3px}
+@media (hover:hover){.lc-go:hover{filter:brightness(1.08)}}
+.lc-nav,.jr-explore-btn,.jr-done{display:none}
+/* phones and tablets: the hero stays calm; a tap on the globe, the map, a marker or the Explore button opens it full screen */
+html.jr-lock,html.jr-lock body{overflow:hidden}
+@media (max-width:820px){
+  .jr-explore-btn{display:inline-flex;width:42px;padding:0;justify-content:center}
+  .jr-explore-btn span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .journey-hero:not(.jr-explore) .jr-replay{display:none}
+  .journey-hero.jr-explore{position:fixed;inset:0;z-index:2147483000;min-height:0;height:100vh;height:100dvh;margin:0}
+  .jr-explore .hero-body,.jr-explore .jr-explore-btn{display:none}
+  .jr-explore .hero-visual::after{display:none}
+  .jr-explore .hero-visual canvas{touch-action:none}
+  .jr-explore .jr-done{display:inline-flex;position:absolute;z-index:6;top:12px;top:max(12px,env(safe-area-inset-top));right:16px;padding:0 18px}
+  .jr-explore .lcard{padding:14px 14px 10px 16px;touch-action:pan-y}
+  .jr-explore .lc-t{font-size:19px}
+  .jr-explore .lc-p{margin-top:6px;font-size:15px;line-height:1.45}
+  .jr-explore .lc-go{margin-top:10px}
+  .jr-explore .lc-nav{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:6px;border-top:1px solid var(--line);font:500 13px/1 var(--sans);color:var(--small);font-variant-numeric:tabular-nums}
+  .lc-nav button{display:grid;place-items:center;width:40px;height:36px;border:0;border-radius:8px;background:none;color:var(--ink);cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .lc-nav button:focus-visible{outline:2px solid var(--sipi);outline-offset:0}
+}

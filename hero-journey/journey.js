@@ -124,19 +124,23 @@
 
   /* ---------- learn about Uganda: the stops (facts verbatim from the brief) ---------- */
   const STOPS = [
-    { nm: 'Wanyange', t: 'Wanyange, Jinja', primary: 1, at: WANY,
+    { nm: 'Wanyange', t: 'Wanyange, Jinja', primary: 1, at: WANY, go: ['Ways to give', '/ways-to-give'],
       p: 'Where Ripples works: <b>150 children</b> and <b>70 families</b>, alongside a church plant we assisted in 2025.' },
-    { nm: 'Jinja', t: 'Jinja', at: [33.19, 0.43], dw: [-30, -38], dn: [-36, -24], flipW: 1,
+    { nm: 'Jinja', t: 'Jinja', at: [33.19, 0.43], dw: [-30, -38], dn: [-36, -24], flipW: 1, go: ['Join a trip', '/trips'],
       p: 'Where the Nile begins. The river leaves Lake Victoria here and runs north, the length of the country.' },
-    { nm: 'Lake Victoria', t: 'Lake Victoria', at: [32.85, -0.68], atN: [33.05, -0.3],
+    { nm: 'Lake Victoria', t: 'Lake Victoria', at: [32.85, -0.68], atN: [33.05, -0.3], skipN: 1,
       p: 'Africa’s largest lake, shared with Kenya and Tanzania.' },
-    { nm: 'Equator', t: 'The equator', at: [31.15, 0], atN: [33.85, 0], f: ['0°', 'latitude'],
+    { nm: 'Equator', t: 'The equator', at: [31.15, 0], atN: [33.85, 0], f: ['0°', 'latitude'], skipN: 1,
       p: 'Uganda sits on the equator in East Africa.' },
-    { nm: 'Kampala', t: 'Kampala', at: [32.58, 0.32], flipW: 1, f: ['Half', 'of Ugandans are under 18.'],
+    { nm: 'Kampala', t: 'Kampala', at: [32.58, 0.32], flipW: 1, f: ['Half', 'of Ugandans are under 18.'], go: ['Our approach', '/our-approach'],
       p: 'The capital. Uganda is about the size of Kansas, with about 15 times the people: 45.9 million in the May 2024 census.' },
-    { nm: 'The church', t: 'The church', at: [33.05, 2.82], atN: [32.75, 1.2],
+    { nm: 'The church', t: 'The church', at: [33.05, 2.82], atN: [32.75, 1.2], go: ['Partner as a church', '/church'],
       p: 'Christianity came to Uganda in the 1870s, and Ugandans have led the church there for well over a century.' },
   ];
+  // phones: four stops in story order (the country, the place, the church, the work); lake and equator stay as map labels
+  const SEQ_N = ['Kampala', 'Jinja', 'The church', 'Wanyange'].map(n => STOPS.find(sp => sp.nm === n));
+  const seq = () => (L.wide ? STOPS : SEQ_N);
+  const stopNo = sp => seq().indexOf(sp) + 1;
 
   /* ---------- relief, feathered so the flat map melts into the land around it ---------- */
   const rel = {};
@@ -167,6 +171,7 @@
     const w = s.w, h = s.h, wide = w > 820;
     const hr = hero.getBoundingClientRect(), cta = hero.querySelector('.hero-cta').getBoundingClientRect();
     L.cb = cta.bottom - hr.top; L.wide = wide; L.copyR = hero.querySelector('.hero-copy p').getBoundingClientRect().right - hr.left;
+    if (EX) L.cb = 58;               // full screen: only the Done button sits above the map
     hero.style.setProperty('--cb', Math.round(L.cb) + 'px'); hero.style.setProperty('--cr', Math.round(L.copyR) + 'px');
     let rect;
     if (wide) {
@@ -174,25 +179,22 @@
       const rx = Math.max(w * .5, L.copyR + 10); rect = { x: rx, y: h * .1, w: w * .96 - rx, h: h * .8 };
       L.ux = L.cx; L.uy = L.cy;
     } else {
-      L.R0 = Math.min(w * .96, 560);
-      const crest = clamp(L.cb + 30, h * .4, h - 170);
-      L.cx = w * .5; L.cy = crest + L.R0;
-      const top = Math.max(L.cb + 4, h * .45);
-      rect = { x: 0, y: top, w, h: Math.max(140, h - top - 40) };
+      // phones: the whole globe sits in the band under the copy, so the visitor's own city and the full journey are in view
+      const band = h - L.cb - 66;
+      L.R0 = clamp(Math.min(w * .46, (band - 36) / 2), 70, 320);
+      L.cx = w * .5; L.cy = L.cb + 18 + Math.max(L.R0, (band - 36) / 2); L.homeLam = U[0]; L.homePhi = U[1];
+      L.ux = L.cx; L.uy = L.cy;
+      const top = EX ? L.cb : Math.max(L.cb + 4, h * .45);
+      rect = { x: 0, y: top, w, h: Math.max(140, h - top - (EX ? 150 : 40)) };
     }
     // phones get a closer survey around Kampala, Jinja and the lake; desktop frames all of Uganda
     const vf = wide ? Kit.fit(geo.UG_BOX, rect) : Kit.fit([31.6, -1.9, 35.0, 2.2], rect, 'cover');
     L.M = [vf.x(U[0]), vf.y(U[1])]; L.Rf = vf.k * R2D;
-    if (!wide) { // solve the mobile aim exactly: iterate so U lands at (ux, uy) near the crest of the horizon
-      const ux = w * .3, uy = (L.cy - L.R0) + L.R0 * .26; L.ux = ux; L.uy = uy;
-      let lc = U[0], pc = U[1] - 45;
-      for (let i = 0; i < 40; i++) { const m = mat(lc, pc), p = proj3(m, V(...U)); const ex = (L.cx + L.R0 * p[0]) - ux, ey = (L.cy - L.R0 * p[1]) - uy; lc += ex / L.R0 * R2D * .8; pc -= ey / L.R0 * R2D * .8; }
-      L.homeLam = lc; L.homePhi = pc;
-    }
     measureBar();
     pan.x = pan.tx = pan.y = pan.ty = 0;
     cardDirty = true;
-    STOPS.forEach(s => { const f = L.wide ? !!s.flipW : !!s.flipN; s.flip = f; s.el && s.el.classList.toggle('flip', f); s.x = s.y = -1e4; });
+    STOPS.forEach(s => { const f = L.wide ? !!s.flipW : !!s.flipN; s.flip = f; s.el && s.el.classList.toggle('flip', f); s.x = s.y = -1e4; if (s.btn) s.btn.firstChild.textContent = stopNo(s) || ''; });
+    renumber();
     if (rot.mode === 'journey') { const v = journeyView(J.camK); rot.lam = v[0]; rot.phi = v[1]; }
     else if (reduced() || rot.mode === 'rest') { rot.lam = L.homeLam; rot.phi = L.homePhi; rot.vl = rot.vp = 0; }
   };
@@ -245,6 +247,8 @@
   const rot = { lam: U[0], phi: U[1], vl: 0, vp: 0, mode: 'rest', relT: 0, dT: 0 };
   let started = false, zoomTo = 0, zp = 0, zAnim = { t0: 0, from: 0, dur: 1 }, drag = null, st = null, cam = null;
   const pan = { x: 0, y: 0, tx: 0, ty: 0 };
+  const up = { x: 0, y: 0, k: 1 };     // the visitor's own pan and pinch on the full-screen map
+  let EX = false;                      // phones: full-screen explore mode
   let cardDirty = true;
 
   // The journey. Times in seconds from its start (journey clock only runs while the hero is on screen).
@@ -315,11 +319,11 @@
   /* ---------- camera for this frame (globe -> flat map) ---------- */
   const camera = () => {
     const ez = ease(zp), er = ease(clamp(zp * 1.45)), ep = ease(clamp(zp * 1.12));
-    const R = L.R0 * Math.pow(L.Rf / L.R0, ez);
+    const R = L.R0 * Math.pow(L.Rf * up.k / L.R0, ez);
     const lc = rot.lam + wrap(U[0] - rot.lam) * er, pc = rot.phi + (U[1] - rot.phi) * er;
     const m = mat(lc, pc), u = proj3(m, V(...U)), u0 = proj3(mat(rot.lam, rot.phi), V(...U));
     const S0 = [L.cx + L.R0 * u0[0], L.cy - L.R0 * u0[1]];
-    const Sx = lerp(S0[0], L.M[0] + pan.x, ep), Sy = lerp(S0[1], L.M[1] + pan.y, ep);
+    const Sx = lerp(S0[0], L.M[0] + pan.x + up.x, ep), Sy = lerp(S0[1], L.M[1] + pan.y + up.y, ep);
     return { m, R, cx: Sx - R * u[0], cy: Sy + R * u[1], zp, flat: smooth(.42, .9, zp), dotsA: 1 - smooth(.32, .78, zp) };
   };
 
@@ -567,6 +571,19 @@
   const learnEl = document.getElementById('learn'), card = document.getElementById('lcard');
   const cT = card.querySelector('.lc-t'), cP = card.querySelector('.lc-p'), cF = card.querySelector('.lc-f'), cN = card.querySelector('.lc-n'), cC = card.querySelector('.lc-c'), cNum = card.querySelector('.lc-num'), cX = card.querySelector('.lc-x');
   let layerOn = false, active = null, cardOpen = false, shownAt = 0, lastAct = 0, cardH = 0;
+  const cGo = document.createElement('a'); cGo.className = 'lc-go off'; card.appendChild(cGo);
+  const cNav = document.createElement('div'); cNav.className = 'lc-nav';
+  cNav.innerHTML = '<button type="button" class="lc-prev" aria-label="Previous place"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span class="lc-count" aria-hidden="true"></span><button type="button" class="lc-next" aria-label="Next place"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>';
+  card.appendChild(cNav);
+  const cCount = cNav.querySelector('.lc-count');
+  const step = d => { const q = seq(), i = q.indexOf(active); pause(9); openStop(q[((i < 0 ? 0 : i + d) + q.length) % q.length], 'user'); };
+  cNav.querySelector('.lc-prev').addEventListener('click', () => step(-1));
+  cNav.querySelector('.lc-next').addEventListener('click', () => step(1));
+  let swipe = null;                                   // phones: swipe the card sideways to move between places
+  card.addEventListener('pointerdown', e => { swipe = e.pointerType === 'mouse' ? null : { x: e.clientX, y: e.clientY }; }, { passive: true });
+  card.addEventListener('pointerup', e => { if (!swipe) return; const dx = e.clientX - swipe.x, dy = e.clientY - swipe.y; swipe = null; if (Math.abs(dx) > 44 && Math.abs(dx) > Math.abs(dy) * 1.4) step(dx < 0 ? 1 : -1); }, { passive: true });
+  card.addEventListener('pointercancel', () => { swipe = null; }, { passive: true });
+  function renumber() { if (active) fillCard(active); }
   STOPS.forEach((sp, i) => {
     const w = document.createElement('div'); w.className = 'lm off' + (sp.primary ? ' primary' : '');
     const b = document.createElement('button'); b.type = 'button'; b.setAttribute('aria-expanded', 'false'); b.setAttribute('aria-controls', 'lcard');
@@ -574,7 +591,7 @@
     w.appendChild(b); learnEl.appendChild(w);
     Object.assign(sp, { el: w, btn: b, i, vis: false, x: -1e4, y: -1e4, bw: 30, rect: [0, 0, 0, 0] });
     b.addEventListener('click', () => { pause(9); openStop(sp, 'user'); });
-    b.addEventListener('focus', () => { pause(9); openStop(sp, 'user'); });
+    b.addEventListener('focus', () => { if (L.wide || EX) { pause(9); openStop(sp, 'user'); } });
     b.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse') { pause(4); openStop(sp, 'user'); } });
   });
   const pause = extra => { lastAct = now() + (extra || 0) * 1000; };
@@ -582,16 +599,20 @@
   const setLayer = on => {
     if (on === layerOn) return;
     layerOn = on; learnEl.classList.toggle('on', on);
-    if (on) { STOPS.forEach(sp => { sp.x = sp.y = -1e4; }); openStop(STOPS[0], 'default'); }
+    if (on) { STOPS.forEach(sp => { sp.x = sp.y = -1e4; }); openStop(seq()[0], 'default'); }
     else closeCard();
   };
   const fillCard = sp => {
-    cNum.textContent = sp.i + 1; cT.textContent = sp.t; cP.innerHTML = sp.p;
+    cNum.textContent = stopNo(sp) || sp.i + 1; cT.textContent = sp.t; cP.innerHTML = sp.p;
+    if (sp.go) { cGo.textContent = sp.go[0]; cGo.setAttribute('href', sp.go[1]); cGo.classList.remove('off'); } else cGo.classList.add('off');
+    cCount.textContent = (stopNo(sp) || 1) + ' / ' + seq().length;
     if (sp.f) { cN.textContent = sp.f[0]; cC.textContent = sp.f[1]; cF.classList.remove('off'); } else cF.classList.add('off');
     card.classList.toggle('primary', !!sp.primary);
   };
   const openStop = (sp, how) => {
     if (!layerOn || !sp) return;
+    // phones: the hero stays calm. Cards live in the full-screen map, which a tap on a marker opens.
+    if (!L.wide && !EX) { if (how === 'user') enterExplore(sp); return; }
     card.setAttribute('aria-live', how === 'user' ? 'polite' : 'off');
     if (active !== sp) { if (active) active.btn.setAttribute('aria-expanded', 'false'); active = sp; sp.btn.setAttribute('aria-expanded', 'true'); fillCard(sp); }
     if (!cardOpen) { cardOpen = true; card.classList.add('on'); }
@@ -647,6 +668,7 @@
       const bw = L.wide ? sp.bw : 28, hh = L.wide ? 13 : 14;
       const left = sp.flip ? x - bw + hh : x - hh, rect = [left, y - hh, left + bw, y + hh];
       let vis = p[2] > 0;
+      if (!L.wide && sp.skipN) vis = false;
       if (L.wide) { if (rect[0] < L.copyR + 18 || rect[2] > s.w - 12 || rect[1] < 74 || rect[3] > s.h - 12 || overlap(rect, [L.bar[0] - 8, L.bar[1] - 8, L.bar[2] + 8, L.bar[3] + 8]) > 0) vis = false; }
       else {
         if (rect[1] < L.cb + (sp === active ? 2 : 14) || rect[0] < 6 || rect[2] > s.w - 6 || rect[3] > L.bar[1] - 8) vis = false;
@@ -678,7 +700,8 @@
     const n = now();
     if (n - lastAct < 4000 || n - shownAt < 5600) return;
     if (learnEl.contains(document.activeElement) || card.contains(document.activeElement)) return;
-    const vs = visStops(); if (!vs.length) return;
+    if (!L.wide && (!EX || up.x || up.y || up.k !== 1)) return;      // phones: only tour inside explore, and never once the visitor has moved the map
+    const vs = L.wide ? visStops() : seq(); if (!vs.length) return;
     const i = active ? vs.indexOf(active) : -1;
     openStop(vs[(i + 1) % vs.length], 'tour');
   };
@@ -718,6 +741,57 @@
   };
   addEventListener('ripples:origin', onOrigin); document.addEventListener('ripples:origin', onOrigin);
 
+  /* ---------- phones: full-screen explore mode ---------- */
+  const root = document.documentElement;
+  const exBtn = document.createElement('button'); exBtn.type = 'button'; exBtn.className = 'jr-btn jr-explore-btn'; exBtn.setAttribute('aria-label', 'Explore the map full screen');
+  exBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M11 3h4v4M7 15H3v-4M15 3l-5 5M3 15l5-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Explore</span>';
+  bar.insertBefore(exBtn, btn);
+  const doneBtn = document.createElement('button'); doneBtn.type = 'button'; doneBtn.className = 'jr-btn jr-done'; doneBtn.innerHTML = '<span>Done</span>';
+  hero.appendChild(doneBtn);
+  let spacer = null;
+  function enterExplore(sp) {
+    if (EX || L.wide) return;
+    EX = true; up.x = up.y = 0; up.k = 1;
+    spacer = document.createElement('div'); spacer.style.height = hero.offsetHeight + 'px'; spacer.setAttribute('aria-hidden', 'true');
+    hero.parentNode.insertBefore(spacer, hero);
+    document.body.appendChild(hero);                    // out of the page flow, so no ancestor can clip or stack over it
+    hero.classList.add('jr-explore'); root.classList.add('jr-lock');
+    if (J.phase === 'run') endJourney();
+    requestAnimationFrame(() => { layout(st.s); cardDirty = true; if (layerOn) openStop(sp || seq()[0], sp ? 'user' : 'default'); st.poke(); try { doneBtn.focus({ preventScroll: true }); } catch (_) { /* older Safari */ } });
+  }
+  function exitExplore() {
+    if (!EX) return;
+    EX = false; up.x = up.y = 0; up.k = 1; closeCard();
+    hero.classList.remove('jr-explore'); root.classList.remove('jr-lock');
+    if (spacer && spacer.parentNode) { spacer.parentNode.insertBefore(hero, spacer); spacer.remove(); } spacer = null;
+    requestAnimationFrame(() => { layout(st.s); st.poke(); try { exBtn.focus({ preventScroll: true }); } catch (_) { /* older Safari */ } });
+  }
+  exBtn.addEventListener('click', () => enterExplore());
+  doneBtn.addEventListener('click', exitExplore);
+  // a plain tap on the globe or map opens explore; inside it, drag pans the map and two fingers zoom it
+  const pts = new Map(); let tap = null, pinch = null;
+  cv.addEventListener('pointerdown', e => {
+    if (e.pointerType === 'mouse') return;
+    pts.set(e.pointerId, [e.clientX, e.clientY]);
+    tap = pts.size === 1 ? { x: e.clientX, y: e.clientY, t: now(), id: e.pointerId } : null;
+    if (EX && pts.size === 2 && zp >= .97) { const a = [...pts.values()]; pinch = { d: Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) || 1, k: up.k }; }
+  });
+  cv.addEventListener('pointermove', e => {
+    if (!pts.has(e.pointerId)) return;
+    const was = pts.get(e.pointerId); pts.set(e.pointerId, [e.clientX, e.clientY]);
+    if (!EX || zp < .97) return;
+    if (pinch && pts.size === 2) { const a = [...pts.values()]; up.k = clamp(pinch.k * Math.hypot(a[0][0] - a[1][0], a[0][1] - a[1][1]) / pinch.d, .6, 3.2); }
+    else if (pts.size === 1) { const lim = Math.max(st.s.w, st.s.h) * .9 * up.k; up.x = clamp(up.x + e.clientX - was[0], -lim, lim); up.y = clamp(up.y + e.clientY - was[1], -lim, lim); }
+    pause(9); cardDirty = true; st.poke();
+  });
+  const tapEnd = e => {
+    if (!pts.has(e.pointerId)) return;
+    pts.delete(e.pointerId); if (pts.size < 2) pinch = null;
+    const tp = tap; tap = null;
+    if (e.type === 'pointerup' && tp && tp.id === e.pointerId && !EX && !L.wide && J.phase === 'done' && now() - tp.t < 350 && Math.hypot(e.clientX - tp.x, e.clientY - tp.y) < 9) enterExplore();
+  };
+  cv.addEventListener('pointerup', tapEnd); cv.addEventListener('pointercancel', tapEnd);
+
   /* ---------- drag to spin ---------- */
   const local = e => { const b = cv.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
   const onDisc = (x, y) => cam && zp === 0 && zoomTo === 0 && Math.hypot(x - cam.cx, y - cam.cy) < cam.R * 1.03;
@@ -733,7 +807,7 @@
     if (!drag) { if (e.pointerType === 'mouse') { const [x, y] = local(e); cv.style.cursor = onDisc(x, y) ? 'grab' : ''; } return; }
     if (e.pointerId !== drag.id) return;
     const n = now(), dts = Math.max(.008, (n - drag.t) / 1000);
-    const R = cam ? cam.R : L.R0, dx = e.clientX - drag.x, dy = drag.touch ? 0 : e.clientY - drag.y;
+    const R = cam ? cam.R : L.R0, dx = e.clientX - drag.x, dy = drag.touch && !EX ? 0 : e.clientY - drag.y;
     const dl = -dx / R * R2D / Math.max(.45, Math.cos(rot.phi * D2R) * .6 + .4), dp = dy / R * R2D;
     rot.lam = wrap(rot.lam + dl); rot.phi = clamp(rot.phi + dp, -80, 80);
     rot.vl = lerp(rot.vl, dl / dts, .45); rot.vp = lerp(rot.vp, dp / dts, .45);
@@ -757,7 +831,7 @@
   }
   btn.addEventListener('click', () => {
     startZoom(zoomTo ? 0 : 1);
-    drag = null; pan.tx = pan.ty = 0;
+    drag = null; pan.tx = pan.ty = 0; up.x = up.y = 0; up.k = 1;
     if (J.phase === 'run') endJourney();
     if (rot.mode === 'journey' || rot.mode === 'drag') { rot.mode = 'rest'; rot.dT = 0; rot.vl = rot.vp = 0; }
     if (reduced()) { zp = zoomTo; pan.x = pan.y = 0; if (!zoomTo) { rot.mode = 'rest'; rot.lam = L.homeLam; rot.phi = L.homePhi; } st.poke(); }
@@ -783,11 +857,13 @@
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && cardOpen) { closeCard(); pause(3); }
+    else if (e.key === 'Escape' && EX) exitExplore();
   });
   document.addEventListener('pointerdown', e => {
     if (!cardOpen) return;
     const tg = e.target;
     if (card.contains(tg) || learnEl.contains(tg) || bar.contains(tg)) return;
+    if (EX) { pause(6); return; }                       // full screen: the card stays while the map is dragged
     pause(6); closeCard();
   }, { passive: true });
   hero.addEventListener('pointermove', () => { if (now() > lastAct) lastAct = now(); }, { passive: true });
