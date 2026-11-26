@@ -124,9 +124,9 @@
 
   /* ---------- learn about Uganda: the stops (facts verbatim from the brief) ---------- */
   const STOPS = [
-    { nm: 'Wanyange', t: 'Wanyange, Jinja', primary: 1, at: WANY, go: ['Ways to give', '/ways-to-give'],
+    { nm: 'Wanyange', t: 'Wanyange, Jinja', primary: 1, at: WANY, go: ['Sponsor a child', '/sponsor'],
       p: 'Where Ripples works: <b>150 children</b> and <b>70 families</b>, alongside a church plant we assisted in 2025.' },
-    { nm: 'Jinja', t: 'Jinja', at: [33.19, 0.43], dw: [-30, -38], dn: [-36, -24], flipW: 1, go: ['Join a trip', '/trips'],
+    { nm: 'Jinja', t: 'Jinja', at: [33.19, 0.43], dw: [-30, -38], dn: [-36, -24], flipW: 1, go: ['Trips to Uganda', '/trips'],
       p: 'Where the Nile begins. The river leaves Lake Victoria here and runs north, the length of the country.' },
     { nm: 'Lake Victoria', t: 'Lake Victoria', at: [32.85, -0.68], atN: [33.05, -0.3], skipN: 1,
       p: 'Africa’s largest lake, shared with Kenya and Tanzania.' },
@@ -134,7 +134,7 @@
       p: 'Uganda sits on the equator in East Africa.' },
     { nm: 'Kampala', t: 'Kampala', at: [32.58, 0.32], flipW: 1, f: ['Half', 'of Ugandans are under 18.'], go: ['Our approach', '/our-approach'],
       p: 'The capital. Uganda is about the size of Kansas, with about 15 times the people: 45.9 million in the May 2024 census.' },
-    { nm: 'The church', t: 'The church', at: [33.05, 2.82], atN: [32.75, 1.2], go: ['Partner as a church', '/church'],
+    { nm: 'The church', t: 'The church', at: [33.05, 2.82], atN: [32.75, 1.2], go: ['Church partnership', '/church-partnership'],
       p: 'Christianity came to Uganda in the 1870s, and Ugandans have led the church there for well over a century.' },
   ];
   // phones: four stops in story order (the country, the place, the church, the work); lake and equator stay as map labels
